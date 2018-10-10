@@ -1,0 +1,18 @@
+pipeline:
+  docker:
+    image: metwork/drone-docker-specific-image:latest
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /root:/root
+    commands:
+      - if test "${DRONE_BRANCH}" = "master"; then
+          docker build -t metwork/mfservplugins-centos7-buildimage:master -t metwork/mfservplugins-centos7-buildimage:latest --build-arg BRANCH=master --build-arg CACHEBUST=${DRONE_BUILD_NUMBER} .;
+        elif test "${DRONE_BRANCH}" = "integration"; then
+          docker build -t metwork/mfservplugins-centos7-buildimage:integration --build-arg BRANCH=integration --build-arg CACHEBUST=${DRONE_BUILD_NUMBER} .;
+        else
+          docker build -t metwork/mfservplugins-centos7-buildimage:${DRONE_BRANCH} --build-arg BRANCH=master --build-arg CACHEBUST=${DRONE_BUILD_NUMBER} .;
+        fi
+      - docker push metwork/mfservplugins-centos7-buildimage:${DRONE_BRANCH}
+      - if test "${DRONE_BRANCH}" = "master"; then docker push metwork/mfservplugins-centos7-buildimage:latest; fi
+    when:
+       event: push 
